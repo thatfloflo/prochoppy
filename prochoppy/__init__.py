@@ -71,8 +71,15 @@ class AnnotationReader:
         """Get a copy of the Annotation markers."""
         return copy(self._markers)  # type: ignore
 
+    def get_filename(self) -> Path:
+        """Get the filename of the annotation file."""
+        return self._filename
+
     def __iter__(self):
         return copy(self._sections).__iter__()
+
+    def __len__(self):
+        return len(self._sections)
 
 
 class WaveReader:

@@ -1,5 +1,6 @@
 """Command-line interface for ProChopPy."""
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from colorama import init as init_colorama, Fore, Style
 from pathlib import Path
 from typing import Literal
 from .__init__ import AnnotationReader, WaveReader, WaveWriter
@@ -69,17 +70,31 @@ def main(
 
         # Read and chop
         annotations = AnnotationReader(annotation_file)
+        print(f"{Style.DIM}Annotation file: {Fore.GREEN}{annotations.get_filename()}{Style.RESET_ALL}")
+        print(f"{Style.DIM}  - Sections:    {Fore.MAGENTA}{len(annotations)}{Style.RESET_ALL}")
         audio_in = WaveReader(audio_file)
         audio_in_info = audio_in.get_info()
-        print(audio_in.get_info())
+        print(f"{Style.DIM}Source audio file: {Fore.GREEN}{audio_in.get_filename()}{Style.RESET_ALL}")
+        print(f"{Style.DIM}  - Channels:    {Fore.MAGENTA}{audio_in_info.n_channels}{Style.RESET_ALL}")
+        print(f"{Style.DIM}  - Sample rate: {Fore.MAGENTA}{audio_in_info.sample_rate}Hz{Style.RESET_ALL}")
+        print(f"{Style.DIM}  - Length:      {Fore.MAGENTA}{audio_in_info.length}s{Style.RESET_ALL}")
+        print(f"{Style.DIM}Output directory: {Fore.GREEN}{output_dir}{Style.RESET_ALL}")
+        print()
+        print(f"{Style.BRIGHT}Processing files:{Style.RESET_ALL}")
+        counter: int = 1
+        max: int = len(annotations)
         for start, end, label in annotations:
+            print(f"{Style.DIM}{Fore.CYAN}{counter}/{max}  {Style.NORMAL}{Fore.MAGENTA}{label}.wav {Style.DIM}{Fore.CYAN}({start}s to {end}s){Style.RESET_ALL}")
             output_file = output_dir / f"{label}.wav"
             audio_out = WaveWriter(output_file, audio_in_info)
             slice_data = audio_in.get_slice(start, end)
             audio_out.set_samples(slice_data)
             audio_out.close()
+            counter += 1
+        print(f"{Style.BRIGHT}{Fore.GREEN}Chopping completed.{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":
+    init_colorama()
     arguments = parse_args()
     main(**arguments)  # type: ignore
