@@ -7,6 +7,8 @@ name = "pypi"
 colorama = "*"
 
 [dev-packages]
+build = "*"
+twine = "*"
 
 [requires]
 python_version = "3.10"

@@ -3,7 +3,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from colorama import init as init_colorama, Fore, Style
 from pathlib import Path
 from typing import Literal
-from .__init__ import AnnotationReader, WaveReader, WaveWriter
+from . import AnnotationReader, WaveReader, WaveWriter
 
 __all__ = ["parse_args", "main"]
 
@@ -29,7 +29,7 @@ def parse_args() -> dict[str, str | bool]:
         epilog=_epilog,
         formatter_class=RawDescriptionHelpFormatter
     )
-    parser.add_argument("-I", action="version", version="0.1", help="Report version number and exit.")
+    parser.add_argument("-I", action="version", version="0.1.0", help="Report version number and exit.")
     parser.add_argument("-a", required=True, metavar="audio.wav", help="Specify the audio file to be segmented into separate files. Can be 1 or 2 channels.")
     parser.add_argument("-t", required=True, metavar="annotations.txt", help="Specify the annotation text file containing the break points. Each line consists of a time in seconds followed by TAB and a filename label.")
     parser.add_argument("-o", required=True, metavar="output.dir", help="Specify the name of the output directory where the separate files are to be placed.")
