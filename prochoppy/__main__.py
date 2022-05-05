@@ -1,28 +1,28 @@
 """Command-line interface for ProChopPy."""
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from colorama import init as init_colorama, Fore, Style
 from pathlib import Path
 from typing import Literal
-from . import AnnotationReader, WaveReader, WaveWriter
+from . import AnnotationReader, WaveReader, WaveWriter, cliutil as cli
 
 __all__ = ["parse_args", "main"]
 
 StrPath = str | Path
 
 def parse_args() -> dict[str, str | bool]:
-    _description = (
-        "ProChopPy - Segment audio recordings into separate files based on ProRec annotations.\n"
-        "\n"
+    _description = cli.convert(
+        "<s bright><f green>ProChopPy</f> - Segment audio recordings into separate files based "
+        "on ProRec annotations.</s><br>"
+        "<br>"
         "ProChopPy is a Python replacement for Mark Huckvale's ProChop (part of ProRec), which "
         "chops up a recording into separate files, based on an annotation file containing the "
         "break points. ProChopPy is designed to work with files recorded using ProRec, the prompt "
-        "& record program by Mark Huckvale (https://www.phon.ucl.ac.uk/resource/prorec)."
+        "&amp; record program by Mark Huckvale (https://www.phon.ucl.ac.uk/resource/prorec)."
     )
-    _epilog = (
-        "Note: As compared to the original ProChop, ProChopPy does not implement export to the "
-        "proprietary format of the Speech Filing System (SFS).\n"
+    _epilog = cli.convert(
+        "Note: <s dim>As compared to the original ProChop, ProChopPy does not implement export to the "
+        "proprietary format of the Speech Filing System (SFS).<br>\n"
         "ProChopPy also does not currently support silence detection, which ProChop supports with "
-        "the -s option."
+        "the -s option.</s>"
     )
     parser = ArgumentParser(
         description=_description,
@@ -69,32 +69,38 @@ def main(
             raise ValueError(f"File type must be either 'wav' or 'sfs'; {file_type!r} specified.")
 
         # Read and chop
+        cli.writeln("<s bright><f yellow>Chopping audio file with ProChopPy...</f></s>")
         annotations = AnnotationReader(annotation_file)
-        print(f"{Style.DIM}Annotation file: {Fore.GREEN}{annotations.get_filename()}{Style.RESET_ALL}")
-        print(f"{Style.DIM}  - Sections:    {Fore.MAGENTA}{len(annotations)}{Style.RESET_ALL}")
+        cli.writeln(f"<s dim>Annotation file:   <f green>{annotations.get_filename()}</f></s>")
+        cli.writeln(f"<s dim>  - Sections:      <f cyan>{len(annotations)}</f></s>")
         audio_in = WaveReader(audio_file)
         audio_in_info = audio_in.get_info()
-        print(f"{Style.DIM}Source audio file: {Fore.GREEN}{audio_in.get_filename()}{Style.RESET_ALL}")
-        print(f"{Style.DIM}  - Channels:    {Fore.MAGENTA}{audio_in_info.n_channels}{Style.RESET_ALL}")
-        print(f"{Style.DIM}  - Sample rate: {Fore.MAGENTA}{audio_in_info.sample_rate}Hz{Style.RESET_ALL}")
-        print(f"{Style.DIM}  - Length:      {Fore.MAGENTA}{audio_in_info.length}s{Style.RESET_ALL}")
-        print(f"{Style.DIM}Output directory: {Fore.GREEN}{output_dir}{Style.RESET_ALL}")
-        print()
-        print(f"{Style.BRIGHT}Processing files:{Style.RESET_ALL}")
+        cli.writeln(f"<s dim>Source audio file: <f green>{audio_in.get_filename()}</f></s>")
+        cli.writeln(f"<s dim>  - Channels:      <f cyan>{audio_in_info.n_channels}</f></s>")
+        cli.writeln(f"<s dim>  - Sample rate:   <f cyan>{audio_in_info.sample_rate}Hz</f></s>")
+        cli.writeln(f"<s dim>  - Length:        <f cyan>{audio_in_info.length}s</f></s>")
+        cli.writeln(f"<s dim>Output directory:  <f green>{output_dir}</f></s>")
         counter: int = 1
         max: int = len(annotations)
+        counter_width: int = len(str(max))
+        label_width: int = annotations.get_max_marker_len()
         for start, end, label in annotations:
-            print(f"{Style.DIM}{Fore.CYAN}{counter}/{max}  {Style.NORMAL}{Fore.MAGENTA}{label}.wav {Style.DIM}{Fore.CYAN}({start}s to {end}s){Style.RESET_ALL}")
+            if counter > 1:
+                cli.clearln()
+            cli.write(f"<s bright>Processing files:</s>  ")
+            cli.write(f"<s dim><f cyan>{str(counter).rjust(counter_width)}/{max}</f></s> ")
+            cli.write(f"<f green>{label.ljust(label_width)} </f><s dim><f cyan>({start}s to {end}s)</f></s>")
             output_file = output_dir / f"{label}.wav"
             audio_out = WaveWriter(output_file, audio_in_info)
             slice_data = audio_in.get_slice(start, end)
             audio_out.set_samples(slice_data)
             audio_out.close()
             counter += 1
-        print(f"{Style.BRIGHT}{Fore.GREEN}Chopping completed.{Style.RESET_ALL}")
+        cli.newln()
+        cli.writeln(f"<s bright><f yellow>Chopping completed.</f></s>")
 
 
 if __name__ == "__main__":
-    init_colorama()
+    cli.init()
     arguments = parse_args()
     main(**arguments)  # type: ignore

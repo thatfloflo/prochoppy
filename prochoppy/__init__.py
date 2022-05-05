@@ -41,10 +41,12 @@ class AnnotationReader:
     _filename: Path
     _markers: list[tuple[float, str]]
     _sections: list[tuple[float, float, str]]
+    _max_marker_len: int
 
     def __init__(self, filename: StrPath):
         self._markers = []
         self._sections = []
+        self._max_marker_len = 0
         self._filename = Path(filename)
         if not self._filename.exists():
             raise FileNotFoundError(f"File '{filename}' does not exist.")
@@ -58,6 +60,7 @@ class AnnotationReader:
                     raise IOError("File appears not to be a valid ProRec annotation file.")
                 time, label = line.split("\t", maxsplit=2)
                 self._markers.append((float(time), label.strip()))
+                self._max_marker_len = max(self._max_marker_len, len(label.strip()))
     
     def _compute_sections(self):
         max = len(self._markers)
@@ -70,6 +73,10 @@ class AnnotationReader:
     def get_markers(self) -> dict[float, str]:
         """Get a copy of the Annotation markers."""
         return copy(self._markers)  # type: ignore
+
+    def get_max_marker_len(self) -> int:
+        """Get the maximal length of a marker label."""
+        return self._max_marker_len
 
     def get_filename(self) -> Path:
         """Get the filename of the annotation file."""
